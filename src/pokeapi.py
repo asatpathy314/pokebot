@@ -1,4 +1,3 @@
-# This file we interact with the Pokemon API
+# This file we interact with the Pokémon API
 
 import requests
-
