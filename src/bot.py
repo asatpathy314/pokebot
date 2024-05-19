@@ -2,6 +2,8 @@ import discord
 import os
 from dotenv import load_dotenv
 import requests
+from pokeapi import PokeAPIClient, PokemonType
+
 dotenv_path = "../.env" # insert your .env path here
 load_dotenv(dotenv_path)
 
@@ -28,31 +30,22 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    if message.content.startswith('!hello'):
-        await message.channel.send('Hello!')
-
-    if message.content.startswith('!gettype'):
+    if message.content.startswith('/type'):
         # splits the command into an array of strings
-        mon = message.content.split()
+        message_array = message.content.split()
 
         # when len > 1 means there is a word after !gettype
-        if len(mon) > 1:
-            poke = mon[1]
-            # sends a request to the url and parses JSON content into python
-            api = requests.get("https://pokeapi.co/api/v2/pokemon/" + poke)
-            conv = api.json()
-
-            # status code 200 means the pokemon exists
-            if api.status_code == 200:
-                # finds the "types" section on the API and goes through each type
-                # and adds the name variable from each into types_str
-                types = [type_info['type']['name'] for type_info in conv['types']]
-                types_str = ', '.join(types)
-                await message.channel.send(types_str)
-            else:
-                # this don't work yet
-                await message.channel.send(f'{poke} is not a pokemon, please try again.')
+        if len(message_array) > 1:
+            response = PokeAPIClient.get_pokemon_type(message_array)
+            await message.channel.send(response[0])
         else:
             await message.channel.send('Type a pokemon name after')
+
+    if message.content.startswith('/weakness'):
+        message_array = message.content.split()
+        if len(message_array) > 1:
+            await message.channel.send(PokeAPIClient.get_type_weaknesses(message_array))
+        else:
+            await message.channel.send('Type a type name after')
 
 bot.run(DISCORD_TOKEN)
