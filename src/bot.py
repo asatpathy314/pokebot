@@ -44,11 +44,13 @@ async def on_message(message):
 
             # status code 200 means the pokemon exists
             if api.status_code == 200:
-                #
+                # finds the "types" section on the API and goes through each type
+                # and adds the name variable from each into types_str
                 types = [type_info['type']['name'] for type_info in conv['types']]
                 types_str = ', '.join(types)
                 await message.channel.send(types_str)
             else:
+                # this don't work yet
                 await message.channel.send(f'{poke} is not a pokemon, please try again.')
         else:
             await message.channel.send('Type a pokemon name after')
