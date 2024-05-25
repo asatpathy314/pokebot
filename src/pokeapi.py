@@ -1,6 +1,10 @@
 # This file we interact with the Pokémon API
 import requests
+import logging
+import json
+import copy
 from enum import Enum
+
 
 class PokemonType(Enum):
     NORMAL = 1
@@ -21,16 +25,48 @@ class PokemonType(Enum):
     DRAGON = 16
     DARK = 17
     FAIRY = 18
+
     @staticmethod
-    def from_str(label):
+    def from_str(label: str):
         return PokemonType[label.upper()].value
 
-class PokeAPIClient:
     @staticmethod
-    def get_pokemon_type(message_array):
-        original_pokemon_name = ' '.join(message_array[1:])
-        raw_pokemon_name = '-'.join(message_array[1:])
-        pokemon_name = ''.join(filter(lambda x: x.isalnum() or x == '-', raw_pokemon_name))
+    def to_str(num: int):
+        return PokemonType(num).name.lower()
+
+
+class PokeAPIClient:
+    def __init__(self):
+        self.strengths = json.load(open("strengths.json", "r"))
+        self.weaknesses = json.load(open("weaknesses.json", "r"))
+        self.default = {"normal": 1.0,  # do not mutate this dictionary
+                        "fire": 1.0,
+                        "water": 1.0,
+                        "grass": 1.0,
+                        "flying": 1.0,
+                        "fighting": 1.0,
+                        "poison": 1.0,
+                        "ground": 1.0,
+                        "rock": 1.0,
+                        "psychic": 1.0,
+                        "ice": 1.0,
+                        "bug": 1.0,
+                        "ghost": 1.0,
+                        "steel": 1.0,
+                        "dragon": 1.0,
+                        "dark": 1.0,
+                        "fairy": 1.0}
+
+    @staticmethod
+    def sanitize_message(message_array: list):
+        original_message = ' '.join(message_array[1:])
+        raw_message = '-'.join(message_array[1:])
+        query = ''.join(filter(lambda x: x.isalnum() or x == '-', raw_message))
+        return original_message, query
+
+    @staticmethod
+    def get_pokemon_type(message_array: list):
+        original_pokemon_name, pokemon_name = PokeAPIClient.sanitize_message(message_array)
         response = requests.get(f"https://pokeapi.co/api/v2/pokemon/{pokemon_name}")
         if response.status_code == 200:
             data = response.json()
@@ -41,15 +77,36 @@ class PokeAPIClient:
         else:
             return f'An error occurred, please try again.', -2
 
+    def get_type_multiplier(self, message_array: list, relation: str, is_move: bool = False):
+        if relation not in ["strengths", "weaknesses"]:
+            logging.error("Invalid type relation. Please choose either 'strengths' or 'weaknesses'.")
+            return -1
+        if is_move:
+            original_move_name, move_name = PokeAPIClient.sanitize_message(message_array)
+            move_type = PokeAPIClient.get_move_type(move_name)
+            if move_type == f'{move_name} is not a Pokémon move, please try again.':
+                move_type = f'{original_move_name} is not a Pokémon move, please try again.'
+                return move_type, -1
+            else:
+                return self.strengths[move_type] if relation == "strengths" else self.weaknesses[move_type], 0
+        else:
+            types_response, return_code = self.get_pokemon_type(message_array)
+            if return_code < 0:
+                return types_response
+            new_state = copy.deepcopy(self.default)
+            for pokemon_type in types_response:
+                weakness_multipliers = self.weaknesses[pokemon_type].items()
+                for type_string, multiplier in weakness_multipliers:
+                    new_state[type_string] *= multiplier
+            return new_state
 
     @staticmethod
-    def get_type_weaknesses(message_array):
-        type_request_response = PokeAPIClient.get_pokemon_type(message_array)
-        if type_request_response[1] < 0:
-            return type_request_response[0]
-        type_array = type_request_response[0]
-        responses = [requests.get(f"https://pokeapi.co/api/v2/type/{PokemonType.from_str(pokemon_type)}") for pokemon_type in type_array]
-        if len(type_array) > 1:
-            # TODO: handle the case where there are multiple types
-            pass
-        return [response.json().get('damage_relations') for response in responses]
+    def get_move_type(move_name: str):
+        response = requests.get(f"https://pokeapi.co/api/v2/move/{move_name}")
+        if response.status_code == 200:
+            data = response.json()
+            return data['type']['name']
+        elif response.status_code == 404:
+            return f'{move_name} is not a Pokémon move, please try again.'
+        else:
+            return f'An error occurred, please try again.'

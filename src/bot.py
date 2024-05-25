@@ -1,3 +1,4 @@
+
 import discord
 import os
 from dotenv import load_dotenv
@@ -11,6 +12,7 @@ load_dotenv(dotenv_path)
 intents = discord.Intents.default()
 intents.message_content = True # lets the bot read messages
 bot = discord.Client(intents=intents)
+api_client = PokeAPIClient()
 
 DISCORD_TOKEN = os.environ.get("DISCORD_API_TOKEN")
 
@@ -36,15 +38,21 @@ async def on_message(message):
 
         # when len > 1 means there is a word after !gettype
         if len(message_array) > 1:
-            response = PokeAPIClient.get_pokemon_type(message_array)
+            response = api_client.get_pokemon_type(message_array)
             await message.channel.send(response[0])
         else:
             await message.channel.send('Type a pokemon name after')
 
     if message.content.startswith('/weakness'):
         message_array = message.content.split()
+        description_text = api_client.get_type_multiplier(message_array, 'weaknesses')
+        embed = discord.Embed(
+            color=discord.Color.green(),
+            description=description_text,
+            title="Weaknesses: "
+        )
         if len(message_array) > 1:
-            await message.channel.send(PokeAPIClient.get_type_weaknesses(message_array))
+            await message.channel.send(embed=embed)
         else:
             await message.channel.send('Type a type name after')
 
