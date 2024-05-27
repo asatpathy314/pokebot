@@ -49,6 +49,7 @@ class PokeAPIClient:
                         "ground": 1.0,
                         "rock": 1.0,
                         "psychic": 1.0,
+                        "electric": 1.0,
                         "ice": 1.0,
                         "bug": 1.0,
                         "ghost": 1.0,

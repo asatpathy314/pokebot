@@ -1,20 +1,20 @@
-
 import discord
 import os
 from dotenv import load_dotenv
 import requests
 from pokeapi import PokeAPIClient, PokemonType
 
-dotenv_path = "../.env" # insert your .env path here
+dotenv_path = "../.env"  # insert your .env path here
 load_dotenv(dotenv_path)
 
 # instantiate a bot with the necessary intents
 intents = discord.Intents.default()
-intents.message_content = True # lets the bot read messages
+intents.message_content = True  # lets the bot read messages
 bot = discord.Client(intents=intents)
 api_client = PokeAPIClient()
 
 DISCORD_TOKEN = os.environ.get("DISCORD_API_TOKEN")
+
 
 # event listener for when bot switches to online mode
 
@@ -26,6 +26,7 @@ async def on_ready():
         print(f'{bot.user} is connected to {guild}.')
 
     print(f'PokéBot is connected to {guild_counter} servers!')
+
 
 @bot.event
 async def on_message(message):
@@ -55,5 +56,6 @@ async def on_message(message):
             await message.channel.send(embed=embed)
         else:
             await message.channel.send('Type a type name after')
+
 
 bot.run(DISCORD_TOKEN)
