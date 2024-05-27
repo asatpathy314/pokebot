@@ -34,24 +34,57 @@ async def on_message(message):
         return
 
     if message.content.startswith('/type'):
-        # splits the command into an array of strings
         message_array = message.content.split()
-
-        # when len > 1 means there is a word after !gettype
         if len(message_array) > 1:
-            response = api_client.get_pokemon_type(message_array)
-            await message.channel.send(response[0])
+            response, original_pokemon_name, return_code = api_client.get_pokemon(message_array)
+            if return_code < 0:
+                await message.channel.send(response)
+                return
+            types = [type_info['type']['name'].title() for type_info in response['types']]
+            title_string = 'Types' if len(types) > 1 else 'Type'
+            embed = discord.Embed(
+                color=discord.Color.green(),
+                title=original_pokemon_name.title() + ' ' + title_string
+            )
+            embed.add_field(name=title_string, value=', '.join(types), inline=False)
+            embed.set_thumbnail(url=response['sprites']['front_default'])
+            await message.channel.send(embed=embed)
         else:
             await message.channel.send('Type a pokemon name after')
 
     if message.content.startswith('/weakness'):
         message_array = message.content.split()
-        description_text = api_client.get_type_multiplier(message_array, 'weaknesses')
+        if len(message_array) > 1:
+            pass
+        else:
+            await message.channel.send('Type a pokemon name after')
+            return
+        type_multipliers, pokemon_name, pokemon_image, return_code = api_client.get_type_multiplier(message_array,
+                                                                                                    'weaknesses')
+        if return_code < 0:
+            await message.channel.send(type_multipliers)
+            return
+        (four, two, one, half, quarter) = api_client.filter_weaknesses(type_multipliers)
         embed = discord.Embed(
             color=discord.Color.green(),
-            description=description_text,
-            title="Weaknesses: "
+            title=pokemon_name.title() + ' Weaknesses'
         )
+        if four:
+            embed.add_field(name="4x Weaknesses", value=', '.join([key.title() for key in four.keys()]),
+                            inline=False)
+        if two:
+            embed.add_field(name="2x Weaknesses", value=', '.join([key.title() for key in two.keys()]),
+                            inline=False)
+        if one:
+            embed.add_field(name="1x Weaknesses", value=', '.join([key.title() for key in one.keys()]),
+                            inline=False)
+        if half:
+            embed.add_field(name="0.5x Weaknesses", value=', '.join([key.title() for key in half.keys()]),
+                            inline=False)
+        if quarter:
+            embed.add_field(name="0.25x Weaknesses", value=', '.join([key.title() for key in quarter.keys()]),
+                            inline=False)
+        embed.set_thumbnail(url=pokemon_image)
         if len(message_array) > 1:
             await message.channel.send(embed=embed)
         else:

@@ -55,7 +55,6 @@ def populate_weaknesses():
         for pokemon_type in data['damage_relations']['no_damage_from']:
             weaknesses[pokemon_type['name']] = 0.0
         final[type_name] = weaknesses
-    print(final)
     with open("weaknesses.json", "w") as file:
         json.dump(final, file)
 
@@ -72,7 +71,6 @@ def populate_strengths():
             strengths[pokemon_type['name']] = 0.5
         final[type_name] = strengths
 
-    print(final)
     with open("strengths.json", "w") as file:
         json.dump(final, file)
 
