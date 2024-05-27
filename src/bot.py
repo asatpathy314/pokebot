@@ -43,7 +43,7 @@ async def on_message(message):
             types = [type_info['type']['name'].title() for type_info in response['types']]
             title_string = 'Types' if len(types) > 1 else 'Type'
             embed = discord.Embed(
-                color=discord.Color.green(),
+                color=discord.Color.red(),
                 title=original_pokemon_name.title() + ' ' + title_string
             )
             embed.add_field(name=title_string, value=', '.join(types), inline=False)
@@ -66,7 +66,7 @@ async def on_message(message):
             return
         (four, two, one, half, quarter) = api_client.filter_weaknesses(type_multipliers)
         embed = discord.Embed(
-            color=discord.Color.green(),
+            color=discord.Color.dark_red(),
             title=pokemon_name.title() + ' Weaknesses'
         )
         if four:
